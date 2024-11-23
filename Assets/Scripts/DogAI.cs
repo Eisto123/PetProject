@@ -1,5 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
+using Oculus.Interaction.Input;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.AI;
 
@@ -43,36 +45,34 @@ public class DogAI : MonoBehaviour
 
     private void Idle()
     {
-        // TIMER TO RECALCULATE IDLE POINT
-        State_Idle.RecalcIdleTimer += Time.deltaTime;
-        if (State_Idle.RecalcIdleTimer >= State_Idle.RecalcIdleTime)
-        {
-            Vector3 randomPoint = CalculateRandomPoint();
-            if (randomPoint != Vector3.zero)
-                State_Idle.RandomPoints.Enqueue(CalculateRandomPoint());
-        }
+        HandleRandomPositionCollecting();
 
         // TIMER TO MOVE TO IDLE POINT
-        _stateTimer += Time.deltaTime;
-        if (_stateTimer >= State_Idle.MoveIdleTime)
+        if (_agent.remainingDistance <= _agent.stoppingDistance)
         {
-            _stateTimer = 0.0f;
-            Vector3 randomPoint;
-            try
+            _stateTimer += Time.deltaTime;
+            if (_stateTimer >= State_Idle.WaitIdleMinTime)
             {
-                randomPoint = State_Idle.RandomPoints.Dequeue();
-            }
-            catch (System.InvalidOperationException)
-            {
-                randomPoint = Vector3.zero;
-            }
 
-            // DEBUG!!!!
-            if (randomPoint == Vector3.zero) Debug.LogError("Moved to a zero point");
+                _stateTimer = 0.0f;
+                State_Idle.UpdateCurrentIdleWaitTime();
+                Vector3 randomPoint;
+                try
+                {
+                    randomPoint = State_Idle.RandomPoints.Dequeue();
+                }
+                catch (System.InvalidOperationException)
+                {
+                    Debug.Log("No idle points in queue");
+                    randomPoint = Vector3.zero;
+                }
 
-            _agent.SetDestination(randomPoint);
+                if (randomPoint == Vector3.zero) Debug.LogError("Moved to a zero point");
+                _agent.SetDestination(randomPoint);
+            }
 
         }
+
     }
 
     private void ChaseTarget()
@@ -85,26 +85,42 @@ public class DogAI : MonoBehaviour
         }
     }
 
-    private Vector3 CalculateRandomPoint()
+    private void HandleRandomPositionCollecting()
     {
-        Vector3 randomPoint;
-        GetRandomPoint(transform.position, 10.0f, out randomPoint);
-        return randomPoint;
+        // TIMER TO CALCULATE RANDOM POINTS AND ADD THEM TO QUEUE
+        if (State_Idle.RandomPoints.Count < 5)
+        {
+            State_Idle.RecalcIdleTimer += Time.deltaTime;
+            if (State_Idle.RecalcIdleTimer >= State_Idle.RecalcIdleTime)
+            {
+                Vector3 randomPoint = CalculateRandomPoint(transform.position, State_Idle.IdleRadiusCheck);
+                if (randomPoint != Vector3.zero)
+                    State_Idle.RandomPoints.Enqueue(randomPoint);
+            }
+        }
     }
 
-    private bool GetRandomPoint(Vector3 center, float radius, out Vector3 result)
+    private Vector3 CalculateRandomPoint(Vector3 center, float radius)
     {
         for (int i = 0; i < 30; i++)
         {
             Vector3 randomPoint = center + Random.insideUnitSphere * radius;
-            NavMeshHit hit;
-            if (NavMesh.SamplePosition(randomPoint, out hit, 1.0f, NavMesh.AllAreas))
-            {
-                result = hit.position;
-                return true;
-            }
+            if (NavMesh.SamplePosition(randomPoint, out NavMeshHit hit, 1.0f, NavMesh.AllAreas))
+                return hit.position;
         }
-        result = Vector3.zero;
-        return false;
+        return Vector3.zero;
     }
+
+    #region DEBUG
+
+#if UNITY_EDITOR
+    private void OnDrawGizmosSelected()
+    {
+        Gizmos.color = Color.red;
+        Gizmos.DrawWireSphere(transform.position, State_Idle.IdleRadiusCheck);
+    }
+
+#endif
+
+    #endregion
 }
