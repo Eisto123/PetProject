@@ -2,7 +2,7 @@ using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.AI;
 
-public class DogAI : MonoBehaviour
+public class PetAI : MonoBehaviour
 {
     [Header("Pet AI")]
     [SerializeField] private Transform _playerRef;

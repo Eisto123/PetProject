@@ -98,7 +98,7 @@ GameObject:
   - component: {fileID: 8164552156359700717}
   - component: {fileID: 7752534881872133152}
   m_Layer: 0
-  m_Name: Dog
+  m_Name: Pet
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

@@ -33140,10 +33140,15 @@ PrefabInstance:
       propertyPath: target
       value: 
       objectReference: {fileID: 577330932}
+    - target: {fileID: 7752534881872133152, guid: 05bd3d802e1977a41a25517fe1df3b7d,
+        type: 3}
+      propertyPath: _playerRef
+      value: 
+      objectReference: {fileID: 577330932}
     - target: {fileID: 8650469954630847845, guid: 05bd3d802e1977a41a25517fe1df3b7d,
         type: 3}
       propertyPath: m_Name
-      value: Dog
+      value: Pet
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
