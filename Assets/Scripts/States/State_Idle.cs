@@ -1,21 +1,23 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 public static class State_Idle
 {
-    public static float RecalcIdleTime = 1f;
-    public static float RecalcIdleTimer = 0f;
-    public static float WaitIdleMinTime = 4f;
-    public static float WaitIdleMaxTime = 6f;
-    public static float CurentIdleWaitTime = WaitIdleMinTime;
+    public static float RecalcRandomPointTime = 1f;
+    public static float RecalcRandomPointTimer = 0f;
+
+    public static float WaitBeforeMovingMinTime = 4f;
+    public static float WaitBeforeMovingMaxTime = 6f;
+    public static float CurentWaitBeforeMovingTime = WaitBeforeMovingMinTime;
+    public static float WaitBeforeMovingTimer = 0f;
+
     public static float IdleRadiusCheck = 3f;
 
     // State
     public static Queue<Vector3> RandomPoints = new();
 
-    public static void UpdateCurrentIdleWaitTime()
+    public static void UpdateCurrentWaitBeforeMovingTime()
     {
-        CurentIdleWaitTime = Random.Range(WaitIdleMinTime, WaitIdleMaxTime);
+        CurentWaitBeforeMovingTime = Random.Range(WaitBeforeMovingMinTime, WaitBeforeMovingMaxTime);
     }
 }

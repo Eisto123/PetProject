@@ -1,6 +1,6 @@
 public enum Behaviour
 {
     Idle,
+    ReadyToPlay,
     Playing,
-    FindPlayer
 }

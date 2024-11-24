@@ -1,14 +1,11 @@
-using System.Collections;
-using System.Collections.Generic;
-using Oculus.Interaction.Input;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.AI;
 
 public class DogAI : MonoBehaviour
 {
-    [Header("Dog AI")]
-    [SerializeField] private Transform target;
+    [Header("Pet AI")]
+    [SerializeField] private Transform _playerRef;
 
     // Component References
     private NavMeshAgent _agent;
@@ -21,6 +18,7 @@ public class DogAI : MonoBehaviour
     private float _stateTimer = 0.0f;
     private Behaviour _currentBehaviour = Behaviour.Idle;
 
+    private Transform _target;
 
     private void Awake()
     {
@@ -34,11 +32,11 @@ public class DogAI : MonoBehaviour
             case Behaviour.Idle:
                 Idle();
                 break;
+            case Behaviour.ReadyToPlay:
+                ReadyToPlay();
+                break;
             case Behaviour.Playing:
                 // Playing();
-                break;
-            case Behaviour.FindPlayer:
-                // FindPlayer();
                 break;
         }
     }
@@ -50,12 +48,11 @@ public class DogAI : MonoBehaviour
         // TIMER TO MOVE TO IDLE POINT
         if (_agent.remainingDistance <= _agent.stoppingDistance)
         {
-            _stateTimer += Time.deltaTime;
-            if (_stateTimer >= State_Idle.WaitIdleMinTime)
+            State_Idle.WaitBeforeMovingTimer += Time.deltaTime;
+            if (State_Idle.WaitBeforeMovingTimer >= State_Idle.WaitBeforeMovingMinTime)
             {
-
-                _stateTimer = 0.0f;
-                State_Idle.UpdateCurrentIdleWaitTime();
+                State_Idle.WaitBeforeMovingTimer = 0.0f;
+                State_Idle.UpdateCurrentWaitBeforeMovingTime();
                 Vector3 randomPoint;
                 try
                 {
@@ -75,23 +72,13 @@ public class DogAI : MonoBehaviour
 
     }
 
-    private void ChaseTarget()
-    {
-        _recalcPathTimer += Time.deltaTime;
-        if (_recalcPathTimer >= _recalcPathTime)
-        {
-            _recalcPathTimer = 0.0f;
-            _agent.SetDestination(target.position);
-        }
-    }
-
     private void HandleRandomPositionCollecting()
     {
         // TIMER TO CALCULATE RANDOM POINTS AND ADD THEM TO QUEUE
         if (State_Idle.RandomPoints.Count < 5)
         {
-            State_Idle.RecalcIdleTimer += Time.deltaTime;
-            if (State_Idle.RecalcIdleTimer >= State_Idle.RecalcIdleTime)
+            State_Idle.RecalcRandomPointTimer += Time.deltaTime;
+            if (State_Idle.RecalcRandomPointTimer >= State_Idle.RecalcRandomPointTime)
             {
                 Vector3 randomPoint = CalculateRandomPoint(transform.position, State_Idle.IdleRadiusCheck);
                 if (randomPoint != Vector3.zero)
@@ -111,7 +98,30 @@ public class DogAI : MonoBehaviour
         return Vector3.zero;
     }
 
+    private void ReadyToPlay()
+    {
+        _target = _playerRef;
+        if (Vector3.Distance(transform.position, _target.position) <= _agent.stoppingDistance)
+        {
+
+        }
+        else
+        {
+            State_ReadyToPlay.RecalcPathTimer += Time.deltaTime;
+            if (State_ReadyToPlay.RecalcPathTimer >= _recalcPathTime)
+            {
+                State_ReadyToPlay.RecalcPathTimer = 0.0f;
+                _agent.SetDestination(_target.position);
+            }
+        }
+    }
+
     #region DEBUG
+
+    public void DebugTest()
+    {
+        _currentBehaviour = Behaviour.ReadyToPlay;
+    }
 
 #if UNITY_EDITOR
     private void OnDrawGizmosSelected()
