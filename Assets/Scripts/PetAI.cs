@@ -9,12 +9,7 @@ public class PetAI : MonoBehaviour
     // Component References
     private NavMeshAgent _agent;
 
-    // Path Recalculation
-    private float _recalcPathTime = 0.5f;
-    private float _recalcPathTimer = 0.0f;
-
     // State
-    private float _stateTimer = 0.0f;
     private Behaviour _currentBehaviour = Behaviour.Idle;
 
     private Transform _target;
@@ -39,6 +34,13 @@ public class PetAI : MonoBehaviour
                 break;
         }
     }
+
+    public void OnBallPickedUp()
+    {
+        _currentBehaviour = Behaviour.ReadyToPlay;
+    }
+
+    #region State - IDLE
 
     private void Idle()
     {
@@ -97,6 +99,10 @@ public class PetAI : MonoBehaviour
         return Vector3.zero;
     }
 
+    #endregion
+
+    #region State - READY TO PLAY
+
     private void ReadyToPlay()
     {
         _target = _playerRef;
@@ -107,7 +113,7 @@ public class PetAI : MonoBehaviour
         else
         {
             State_ReadyToPlay.RecalcPathTimer += Time.deltaTime;
-            if (State_ReadyToPlay.RecalcPathTimer >= _recalcPathTime)
+            if (State_ReadyToPlay.RecalcPathTimer >= State_ReadyToPlay.RecalcPathTime)
             {
                 State_ReadyToPlay.RecalcPathTimer = 0.0f;
                 _agent.SetDestination(_target.position);
@@ -115,11 +121,13 @@ public class PetAI : MonoBehaviour
         }
     }
 
+    #endregion
+
     #region DEBUG
 
-    public void DebugTest()
+    public void DBG_ChangeStateTo(int newBehaviour)
     {
-        _currentBehaviour = Behaviour.ReadyToPlay;
+        _currentBehaviour = (Behaviour)newBehaviour;
     }
 
 #if UNITY_EDITOR
