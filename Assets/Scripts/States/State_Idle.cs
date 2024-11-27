@@ -11,7 +11,9 @@ public static class State_Idle
     public static float CurentWaitBeforeMovingTime = WaitBeforeMovingMinTime;
     public static float WaitBeforeMovingTimer = 0f;
 
-    public static float IdleRadiusCheck = 3f;
+    public static float IdleMaxRadiusCheck = 2.5f;
+    public static float IdleMinRadiusCheck = 0.5f;
+
 
     // State
     public static Queue<Vector3> RandomPoints = new();

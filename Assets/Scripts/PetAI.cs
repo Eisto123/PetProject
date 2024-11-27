@@ -6,6 +6,10 @@ public class PetAI : MonoBehaviour
     [Header("Pet AI")]
     [SerializeField] private Transform _playerRef;
 
+    [Header("Behaviour")]
+    [SerializeField] private float _stoppingDistanceToPlayer = 0.7f;
+    [SerializeField] private Transform _pickupPoint;
+
     // Component References
     private NavMeshAgent _agent;
 
@@ -29,16 +33,35 @@ public class PetAI : MonoBehaviour
             case Behaviour.ReadyToPlay:
                 ReadyToPlay();
                 break;
-            case Behaviour.Playing:
-                // Playing();
+            case Behaviour.GoPickup:
+                GoPickup();
+                break;
+            case Behaviour.ReturnPickup:
+                // ReturnPickup();
                 break;
         }
     }
 
-    public void OnBallPickedUp()
+    #region State Changes
+
+    public void OnBallPickedUpByPlayer()
     {
         _currentBehaviour = Behaviour.ReadyToPlay;
     }
+
+    public void OnBallThrown(Transform pickupTarget)
+    {
+        _currentBehaviour = Behaviour.GoPickup;
+        _target = pickupTarget;
+        State_GoPickup.RecalcToTargetTimer = State_GoPickup.RecalcToTargetTime;
+    }
+
+    private void OnTargetPickedUp()
+    {
+        _currentBehaviour = Behaviour.Idle;
+    }
+
+    #endregion
 
     #region State - IDLE
 
@@ -81,18 +104,21 @@ public class PetAI : MonoBehaviour
             State_Idle.RecalcRandomPointTimer += Time.deltaTime;
             if (State_Idle.RecalcRandomPointTimer >= State_Idle.RecalcRandomPointTime)
             {
-                Vector3 randomPoint = CalculateRandomPoint(transform.position, State_Idle.IdleRadiusCheck);
+                Vector3 randomPoint = CalculateRandomPoint(transform.position, State_Idle.IdleMaxRadiusCheck, State_Idle.IdleMinRadiusCheck);
                 if (randomPoint != Vector3.zero)
                     State_Idle.RandomPoints.Enqueue(randomPoint);
             }
         }
     }
 
-    private Vector3 CalculateRandomPoint(Vector3 center, float radius)
+    private Vector3 CalculateRandomPoint(Vector3 center, float radius, float minRadius)
     {
         for (int i = 0; i < 30; i++)
         {
             Vector3 randomPoint = center + Random.insideUnitSphere * radius;
+            if (Vector3.Distance(center, randomPoint) < minRadius)
+                continue;
+            randomPoint = center + Random.insideUnitSphere * radius;
             if (NavMesh.SamplePosition(randomPoint, out NavMeshHit hit, 1.0f, NavMesh.AllAreas))
                 return hit.position;
         }
@@ -106,9 +132,10 @@ public class PetAI : MonoBehaviour
     private void ReadyToPlay()
     {
         _target = _playerRef;
+        _agent.stoppingDistance = _stoppingDistanceToPlayer;
         if (Vector3.Distance(transform.position, _target.position) <= _agent.stoppingDistance)
         {
-
+            // WAIT
         }
         else
         {
@@ -123,6 +150,58 @@ public class PetAI : MonoBehaviour
 
     #endregion
 
+    #region State - GO PICKUP
+
+    private void GoPickup()
+    {
+        _agent.stoppingDistance = State_GoPickup.stoppingDistanceToPickup;
+        if (Vector3.Distance(transform.position, _target.position) <= _agent.stoppingDistance)
+        {
+            ScanForPickup();
+        }
+        else
+        {
+            State_GoPickup.RecalcToTargetTimer += Time.deltaTime;
+            if (State_GoPickup.RecalcToTargetTimer >= State_GoPickup.RecalcToTargetTime)
+            {
+                State_GoPickup.RecalcToTargetTimer = 0.0f;
+                _agent.SetDestination(_target.position);
+            }
+        }
+    }
+
+    private void ScanForPickup()
+    {
+        if (Physics.SphereCast(transform.position, State_GoPickup.PickupRadius, transform.forward, out RaycastHit hit, State_GoPickup.PickupRange))
+        {
+            if (hit.transform.TryGetComponent(out Pickup pickup))
+            {
+                State_GoPickup.WaitBeforePickupTimer += Time.deltaTime;
+                if (State_GoPickup.WaitBeforePickupTimer >= State_GoPickup.WaitBeforePickupTime)
+                {
+                    Pickup(pickup);
+                    State_GoPickup.WaitBeforePickupTimer = 0f;
+                }
+            }
+            else
+            {
+                Debug.Log("No pickup found!!!");
+                State_GoPickup.WaitBeforePickupTimer = 0f;
+            }
+        }
+    }
+
+    private void Pickup(Pickup pickup)
+    {
+        pickup.OnPickedup();
+        pickup.transform.SetParent(_pickupPoint);
+        pickup.transform.position = _pickupPoint.position;
+
+        OnTargetPickedUp();
+    }
+
+    #endregion
+
     #region DEBUG
 
     public void DBG_ChangeStateTo(int newBehaviour)
@@ -131,10 +210,26 @@ public class PetAI : MonoBehaviour
     }
 
 #if UNITY_EDITOR
+
+    [Header("DEBUG")]
+    [SerializeField] private bool _showIdleRadius = false;
+    [SerializeField] private bool _showPickupRange = false;
+
     private void OnDrawGizmosSelected()
     {
-        Gizmos.color = Color.red;
-        Gizmos.DrawWireSphere(transform.position, State_Idle.IdleRadiusCheck);
+        if (_showIdleRadius)
+        {
+            Gizmos.color = Color.red;
+            Gizmos.DrawWireSphere(transform.position, State_Idle.IdleMaxRadiusCheck);
+        }
+
+        if (_showPickupRange)
+        {
+            Color transparentRed = new Color(1.0f, 0.0f, 0.0f, 0.35f);
+            Gizmos.color = transparentRed;
+            Gizmos.DrawSphere(transform.position + transform.forward * State_GoPickup.PickupRange, State_GoPickup.PickupRadius);
+            Gizmos.DrawSphere(transform.position, State_GoPickup.PickupRadius);
+        }
     }
 
 #endif
