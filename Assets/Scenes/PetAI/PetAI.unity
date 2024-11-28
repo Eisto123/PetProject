@@ -9006,6 +9006,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ee55c4bf70c3a194eb922429b854b588, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _pet: {fileID: 2022667351}
   _handGrabInteractorLeft: {fileID: 718090181}
   _handGrabInteractorRight: {fileID: 1782303746}
 --- !u!1 &528204001
@@ -21604,6 +21605,11 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: -17.825
       objectReference: {fileID: 0}
+    - target: {fileID: 7722922448348217360, guid: c99fb869d5407374bbc4f983098776db,
+        type: 3}
+      propertyPath: m_CollisionDetection
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -24429,6 +24435,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ef0ed2dc0fa49e54dac1889906b85abc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _collider: {fileID: 0}
 --- !u!135 &1490488055
 SphereCollider:
   m_ObjectHideFlags: 0
@@ -33423,11 +33430,6 @@ PrefabInstance:
         type: 3}
       propertyPath: _showIdleRadius
       value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8164552156359700717, guid: 05bd3d802e1977a41a25517fe1df3b7d,
-        type: 3}
-      propertyPath: m_StoppingDistance
-      value: 0.4
       objectReference: {fileID: 0}
     - target: {fileID: 8650469954630847845, guid: 05bd3d802e1977a41a25517fe1df3b7d,
         type: 3}

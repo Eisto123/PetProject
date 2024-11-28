@@ -185,9 +185,13 @@ public class PetAI : MonoBehaviour
             }
             else
             {
-                Debug.Log("No pickup found!!!");
+                Debug.Log("No pickup component found!!!");
                 State_GoPickup.WaitBeforePickupTimer = 0f;
             }
+        }
+        else
+        {
+            Debug.Log("No colliders found!!!");
         }
     }
 

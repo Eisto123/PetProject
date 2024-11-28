@@ -3,12 +3,11 @@ using UnityEngine;
 public class Pickup : MonoBehaviour
 {
     private Rigidbody _rb;
-    private Collider _collider;
+    [SerializeField] private Collider _collider;
 
     private void Awake()
     {
         _rb = GetComponent<Rigidbody>();
-        _collider = GetComponent<Collider>();
     }
 
     public void OnPickedup()

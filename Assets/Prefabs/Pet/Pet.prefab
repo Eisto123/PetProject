@@ -1626,7 +1626,7 @@ NavMeshAgent:
   m_Acceleration: 999
   avoidancePriority: 50
   m_AngularSpeed: 720
-  m_StoppingDistance: 1
+  m_StoppingDistance: 0.4
   m_AutoTraverseOffMeshLink: 1
   m_AutoBraking: 1
   m_AutoRepath: 1
@@ -1650,7 +1650,7 @@ MonoBehaviour:
   _stoppingDistanceToPlayer: 0.7
   _pickupPoint: {fileID: 6665662103117756090}
   _showIdleRadius: 0
-  _showPickupRange: 1
+  _showPickupRange: 0
 --- !u!135 &3137043675126648460
 SphereCollider:
   m_ObjectHideFlags: 0

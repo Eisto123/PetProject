@@ -791,6 +791,7 @@ GameObject:
   - component: {fileID: 2875078268880825619}
   - component: {fileID: 7463170366253838858}
   - component: {fileID: 2548796073943767685}
+  - component: {fileID: 6128107534965102470}
   m_Layer: 4
   m_Name: Stone-InteractableToHand
   m_TagString: Untagged
@@ -904,6 +905,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 26cb0a0cb13965347b765a3a9356dd69, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &6128107534965102470
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5776016944069521601}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ef0ed2dc0fa49e54dac1889906b85abc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _collider: {fileID: 6338732054174034848}
 --- !u!1 &6197399470530233515
 GameObject:
   m_ObjectHideFlags: 0
@@ -1905,7 +1919,7 @@ PrefabInstance:
     - target: {fileID: 970644636753141648, guid: 049d245a53f74e745a6b17c9ccfc1dc5,
         type: 3}
       propertyPath: m_SizeDelta.x
-      value: 0
+      value: 147.97
       objectReference: {fileID: 0}
     - target: {fileID: 970644636753141648, guid: 049d245a53f74e745a6b17c9ccfc1dc5,
         type: 3}
@@ -1920,7 +1934,7 @@ PrefabInstance:
     - target: {fileID: 970644636753141648, guid: 049d245a53f74e745a6b17c9ccfc1dc5,
         type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: -10
+      value: -17.825
       objectReference: {fileID: 0}
     - target: {fileID: 970644636753141649, guid: 049d245a53f74e745a6b17c9ccfc1dc5,
         type: 3}
