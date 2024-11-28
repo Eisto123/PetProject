@@ -2,5 +2,6 @@ public enum Behaviour
 {
     Idle,
     ReadyToPlay,
-    Playing,
+    GoPickup,
+    ReturnPickup
 }
