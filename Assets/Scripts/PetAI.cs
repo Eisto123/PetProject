@@ -9,6 +9,9 @@ public class PetAI : MonoBehaviour
     [Header("Behaviour")]
     [SerializeField] private float _stoppingDistanceToPlayer = 0.7f;
     [SerializeField] private Transform _pickupPoint;
+    [SerializeField] private LayerMask _pickupLayer;
+
+    private Pickup _pickedUpObject;
 
     // Component References
     private NavMeshAgent _agent;
@@ -37,7 +40,7 @@ public class PetAI : MonoBehaviour
                 GoPickup();
                 break;
             case Behaviour.ReturnPickup:
-                // ReturnPickup();
+                ReturnPickup();
                 break;
         }
     }
@@ -57,6 +60,12 @@ public class PetAI : MonoBehaviour
     }
 
     private void OnTargetPickedUp()
+    {
+        _target = _playerRef;
+        _currentBehaviour = Behaviour.ReturnPickup;
+    }
+
+    private void OnPickupReturned()
     {
         _currentBehaviour = Behaviour.Idle;
     }
@@ -172,7 +181,7 @@ public class PetAI : MonoBehaviour
 
     private void ScanForPickup()
     {
-        if (Physics.SphereCast(transform.position, State_GoPickup.PickupRadius, transform.forward, out RaycastHit hit, State_GoPickup.PickupRange))
+        if (Physics.SphereCast(transform.position, State_GoPickup.PickupRadius, transform.forward, out RaycastHit hit, State_GoPickup.PickupRange, _pickupLayer))
         {
             if (hit.transform.TryGetComponent(out Pickup pickup))
             {
@@ -197,6 +206,7 @@ public class PetAI : MonoBehaviour
 
     private void Pickup(Pickup pickup)
     {
+        _pickedUpObject = pickup;
         pickup.OnPickedup();
         pickup.transform.SetParent(_pickupPoint);
         pickup.transform.position = _pickupPoint.position;
@@ -208,7 +218,27 @@ public class PetAI : MonoBehaviour
 
     #region State - RETURN PICKUP
 
-
+    private void ReturnPickup()
+    {
+        _agent.stoppingDistance = _stoppingDistanceToPlayer;
+        Vector3 _targetPosFloor = new(_target.position.x, transform.position.y, _target.position.z);
+        if (Vector3.Distance(transform.position, _targetPosFloor) <= _agent.stoppingDistance)
+        {
+            _pickedUpObject.transform.SetParent(null);
+            _pickedUpObject.OnDropped();
+            _pickedUpObject = null;
+            OnPickupReturned();
+        }
+        else
+        {
+            State_ReturnPickup.RecalcToPlayerTimer += Time.deltaTime;
+            if (State_ReturnPickup.RecalcToPlayerTimer >= State_ReturnPickup.RecalcToPlayerTime)
+            {
+                State_ReturnPickup.RecalcToPlayerTimer = 0.0f;
+                _agent.SetDestination(_target.position);
+            }
+        }
+    }
 
     #endregion
 
