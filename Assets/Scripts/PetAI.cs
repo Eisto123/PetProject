@@ -55,6 +55,7 @@ public class PetAI : MonoBehaviour
     public void OnBallThrown(Transform pickupTarget)
     {
         _currentBehaviour = Behaviour.GoPickup;
+        _agent.updateRotation = false;
         _target = pickupTarget;
         State_GoPickup.RecalcToTargetTimer = State_GoPickup.RecalcToTargetTime;
     }
@@ -62,6 +63,7 @@ public class PetAI : MonoBehaviour
     private void OnTargetPickedUp()
     {
         _target = _playerRef;
+        _agent.updateRotation = true;
         _currentBehaviour = Behaviour.ReturnPickup;
     }
 
@@ -164,6 +166,7 @@ public class PetAI : MonoBehaviour
     private void GoPickup()
     {
         _agent.stoppingDistance = State_GoPickup.stoppingDistanceToPickup;
+        HandleRotation();
         if (Vector3.Distance(transform.position, _target.position) <= _agent.stoppingDistance)
         {
             ScanForPickup();
@@ -212,6 +215,15 @@ public class PetAI : MonoBehaviour
         pickup.transform.position = _pickupPoint.position;
 
         OnTargetPickedUp();
+    }
+
+    private void HandleRotation()
+    {
+        Vector3 nextPos = (_target.position - transform.position).normalized;
+        nextPos.y = 0f;
+        Quaternion targetRotation = Quaternion.LookRotation(nextPos);
+        targetRotation.eulerAngles = new Vector3(0, targetRotation.eulerAngles.y, 0);
+        transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRotation, _agent.angularSpeed * Time.deltaTime);
     }
 
     #endregion
