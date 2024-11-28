@@ -49,6 +49,7 @@ public class PetAI : MonoBehaviour
 
     public void OnBallPickedUpByPlayer()
     {
+        _agent.updateRotation = true;
         _currentBehaviour = Behaviour.ReadyToPlay;
     }
 
@@ -69,6 +70,7 @@ public class PetAI : MonoBehaviour
 
     private void OnPickupReturned()
     {
+        _agent.updateRotation = true;
         _currentBehaviour = Behaviour.Idle;
     }
 
