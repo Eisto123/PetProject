@@ -1649,6 +1649,9 @@ MonoBehaviour:
   _playerRef: {fileID: 0}
   _stoppingDistanceToPlayer: 0.7
   _pickupPoint: {fileID: 6665662103117756090}
+  _pickupLayer:
+    serializedVersion: 2
+    m_Bits: 16
   _showIdleRadius: 0
   _showPickupRange: 0
 --- !u!135 &3137043675126648460

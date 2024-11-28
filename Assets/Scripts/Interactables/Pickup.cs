@@ -17,4 +17,12 @@ public class Pickup : MonoBehaviour
         _rb.useGravity = false;
         _collider.enabled = false;
     }
+
+    public void OnDropped()
+    {
+        Debug.Log("Item Dropped: " + gameObject.name);
+        _rb.isKinematic = false;
+        _rb.useGravity = true;
+        _collider.enabled = true;
+    }
 }

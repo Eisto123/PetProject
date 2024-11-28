@@ -23,7 +23,7 @@ public class Player : MonoBehaviour
     {
         if (_handGrabInteractorLeft.IsGrabbing || _handGrabInteractorRight.IsGrabbing)
         {
-            _grabbedObject = _handGrabInteractorLeft.SelectedInteractable.transform.gameObject;
+            _grabbedObject = _handGrabInteractorLeft.SelectedInteractable != null ? _handGrabInteractorLeft.SelectedInteractable.transform.gameObject : null;
             if (_grabbedObject == null)
             {
                 _grabbedObject = _handGrabInteractorRight.SelectedInteractable.transform.gameObject;
