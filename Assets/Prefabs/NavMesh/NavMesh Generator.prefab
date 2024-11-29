@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 1798558851473842538}
   - component: {fileID: 5996275360465162321}
   m_Layer: 0
-  m_Name: RoomNavMesh
+  m_Name: NavMesh Generator
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -47,13 +47,13 @@ MonoBehaviour:
   BuildOnSceneLoaded: 2
   CollectGeometry: 1
   CollectObjects: 2
-  AgentRadius: 0.2
+  AgentRadius: 0.1
   AgentHeight: 0.1
   AgentClimb: 0.05
   AgentMaxSlope: 5.5
   Agents:
   - {fileID: 0}
-  NavigableSurfaces: 9
+  NavigableSurfaces: 1
   SceneObstacles: 49150
   Layers:
     serializedVersion: 2
