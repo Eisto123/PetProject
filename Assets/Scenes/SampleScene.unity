@@ -546,7 +546,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1213980012}
   m_Layer: 0
-  m_Name: -==Camera Objects==-
+  m_Name: -==Player Objects==-
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -600,7 +600,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   SpawnOnStart: 1
-  MeshMaterial: {fileID: 2100000, guid: 599b01c5f1d17436c89b88cc04257314, type: 2}
+  MeshMaterial: {fileID: 2100000, guid: 4f7f01cede3893f42b21a0f2a1ed55e1, type: 2}
   BorderSize: 0
   Colliders: 1
   CutHoles: 0
@@ -802,6 +802,11 @@ PrefabInstance:
       propertyPath: _playerRef
       value: 
       objectReference: {fileID: 922224989}
+    - target: {fileID: 7752534881872133152, guid: 05bd3d802e1977a41a25517fe1df3b7d,
+        type: 3}
+      propertyPath: _debugTarget
+      value: 
+      objectReference: {fileID: 789399270245505005}
     - target: {fileID: 8650469954630847845, guid: 05bd3d802e1977a41a25517fe1df3b7d,
         type: 3}
       propertyPath: m_Name
@@ -859,7 +864,7 @@ PrefabInstance:
     - target: {fileID: 4190972571071656729, guid: cf350320f1377714c95013e17b4aae36,
         type: 3}
       propertyPath: m_LocalPosition.x
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 4190972571071656729, guid: cf350320f1377714c95013e17b4aae36,
         type: 3}
@@ -869,7 +874,7 @@ PrefabInstance:
     - target: {fileID: 4190972571071656729, guid: cf350320f1377714c95013e17b4aae36,
         type: 3}
       propertyPath: m_LocalPosition.z
-      value: 0
+      value: -1.05
       objectReference: {fileID: 0}
     - target: {fileID: 4190972571071656729, guid: cf350320f1377714c95013e17b4aae36,
         type: 3}
