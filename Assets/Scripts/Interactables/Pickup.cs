@@ -13,6 +13,8 @@ public class Pickup : MonoBehaviour
     public void OnPickedup()
     {
         Debug.Log("Item Picked Up: " + gameObject.name);
+        _rb.velocity = Vector3.zero;
+        _rb.angularVelocity = Vector3.zero;
         _rb.useGravity = false;
         _collider.enabled = false;
     }
