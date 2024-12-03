@@ -1,4 +1,4 @@
-using System.Collections;
+using System;
 using UnityEngine;
 using UnityEngine.AI;
 
@@ -13,6 +13,7 @@ public class PetAI : MonoBehaviour
     [SerializeField] private LayerMask _pickupLayer;
 
     private Pickup _pickedUpObject;
+    private Collider[] _scanResults = new Collider[3];
 
     // Component References
     private NavMeshAgent _agent;
@@ -58,6 +59,7 @@ public class PetAI : MonoBehaviour
     public void OnBallPickedUpByPlayer()
     {
         _agent.updateRotation = true;
+        DropPickup();
         _currentBehaviour = Behaviour.ReadyToPlay;
     }
 
@@ -99,6 +101,13 @@ public class PetAI : MonoBehaviour
 
     private void Idle()
     {
+        /* 
+        Could have patrol class that handles gathering points and when to move to them via a timer
+        Then move logic (in this case just agent setDest)
+
+        Then State_Idle would just call the patrol class to check if it should move to a new point
+        */
+
         HandleRandomPositionCollecting();
 
         // TIMER TO MOVE TO IDLE POINT
@@ -114,7 +123,7 @@ public class PetAI : MonoBehaviour
                 {
                     randomPoint = State_Idle.RandomPoints.Dequeue();
                 }
-                catch (System.InvalidOperationException)
+                catch (InvalidOperationException)
                 {
                     Debug.Log("No idle points in queue");
                     randomPoint = Vector3.zero;
@@ -147,10 +156,10 @@ public class PetAI : MonoBehaviour
     {
         for (int i = 0; i < 30; i++)
         {
-            Vector3 randomPoint = center + Random.insideUnitSphere * radius;
+            Vector3 randomPoint = center + UnityEngine.Random.insideUnitSphere * radius;
             if (Vector3.Distance(center, randomPoint) < minRadius)
                 continue;
-            randomPoint = center + Random.insideUnitSphere * radius;
+            randomPoint = center + UnityEngine.Random.insideUnitSphere * radius;
             if (NavMesh.SamplePosition(randomPoint, out NavMeshHit hit, 1.0f, NavMesh.AllAreas))
                 return hit.position;
         }
@@ -188,7 +197,7 @@ public class PetAI : MonoBehaviour
     {
         _agent.stoppingDistance = State_GoPickup.stoppingDistanceToPickup;
         HandleRotation();
-        if (Vector3.Distance(transform.position, _target.position) <= _agent.stoppingDistance)
+        if (Vector3.Distance(transform.position, _target.position) <= _agent.stoppingDistance + State_GoPickup.minDistanceToScan)
         {
             ScanForPickup();
         }
@@ -205,26 +214,50 @@ public class PetAI : MonoBehaviour
 
     private void ScanForPickup()
     {
-        if (Physics.SphereCast(transform.position, State_GoPickup.PickupRadius, transform.forward, out RaycastHit hit, State_GoPickup.PickupRange, _pickupLayer))
+        Array.Clear(_scanResults, 0, _scanResults.Length);
+        if (Physics.OverlapSphereNonAlloc(transform.position, State_GoPickup.PickupRadius, _scanResults, _pickupLayer) > 0)
+        {
+            foreach (Collider col in _scanResults)
+            {
+                if (col == null) continue;
+                if (col.transform.parent.parent.TryGetComponent(out Pickup pickup))
+                {
+                    Debug.Log("Found pickup in OVERLAP");
+                    PreparePickup(pickup);
+                    break;
+                }
+                else
+                {
+                    Debug.LogWarning("Overlap scanning for pickup: Collider found but no pickup component - Something is on the pickup layer without a pickup component!");
+                }
+            }
+        }
+        else if (Physics.SphereCast(transform.position, State_GoPickup.PickupRadius, transform.forward, out RaycastHit hit, State_GoPickup.PickupRange, _pickupLayer))
         {
             if (hit.transform.TryGetComponent(out Pickup pickup))
             {
-                State_GoPickup.WaitBeforePickupTimer += Time.deltaTime;
-                if (State_GoPickup.WaitBeforePickupTimer >= State_GoPickup.WaitBeforePickupTime)
-                {
-                    Pickup(pickup);
-                    State_GoPickup.WaitBeforePickupTimer = 0f;
-                }
+                Debug.Log("Found pickup in SPHERECAST");
+                PreparePickup(pickup);
             }
             else
             {
-                Debug.Log("No pickup component found!!!");
-                State_GoPickup.WaitBeforePickupTimer = 0f;
+                Debug.LogWarning("SphereCast scanning for pickup: Collider found but no pickup component - Something is on the pickup layer without a pickup component!");
             }
         }
         else
         {
-            Debug.Log("No colliders found!!!");
+            Debug.LogWarning("Pet scanning for pickup: No colliders in sphere range.");
+            State_GoPickup.WaitBeforePickupTimer = 0f;
+        }
+    }
+
+    private void PreparePickup(Pickup pickup)
+    {
+        State_GoPickup.WaitBeforePickupTimer += Time.deltaTime;
+        if (State_GoPickup.WaitBeforePickupTimer >= State_GoPickup.WaitBeforePickupTime)
+        {
+            Pickup(pickup);
+            State_GoPickup.WaitBeforePickupTimer = 0f;
         }
     }
 
@@ -257,9 +290,7 @@ public class PetAI : MonoBehaviour
         Vector3 _targetPosFloor = new(_target.position.x, transform.position.y, _target.position.z);
         if (Vector3.Distance(transform.position, _targetPosFloor) <= _agent.stoppingDistance)
         {
-            _pickedUpObject.transform.SetParent(null);
-            _pickedUpObject.OnDropped();
-            _pickedUpObject = null;
+            DropPickup();
             OnPickupReturned();
         }
         else
@@ -271,6 +302,15 @@ public class PetAI : MonoBehaviour
                 _agent.SetDestination(_target.position);
             }
         }
+    }
+
+    private void DropPickup()
+    {
+        if (_pickedUpObject == null) return;
+
+        _pickedUpObject.transform.SetParent(null);
+        _pickedUpObject.OnDropped();
+        _pickedUpObject = null;
     }
 
     #endregion

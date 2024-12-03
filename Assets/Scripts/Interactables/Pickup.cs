@@ -13,7 +13,6 @@ public class Pickup : MonoBehaviour
     public void OnPickedup()
     {
         Debug.Log("Item Picked Up: " + gameObject.name);
-        _rb.isKinematic = true;
         _rb.useGravity = false;
         _collider.enabled = false;
     }
@@ -21,7 +20,6 @@ public class Pickup : MonoBehaviour
     public void OnDropped()
     {
         Debug.Log("Item Dropped: " + gameObject.name);
-        _rb.isKinematic = false;
         _rb.useGravity = true;
         _collider.enabled = true;
     }

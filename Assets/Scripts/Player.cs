@@ -16,7 +16,6 @@ public class Player : MonoBehaviour
     [SerializeField] private DistanceHandGrabInteractor _distanceHandGrabInteractorLeft;
     [SerializeField] private DistanceHandGrabInteractor _distanceHandGrabInteractorRight;
 
-    private bool _isGrabbing;
     private bool _wasGrabbingLastFrame;
 
     private GameObject _grabbedObject;
@@ -32,7 +31,7 @@ public class Player : MonoBehaviour
                 _grabbedObject = _handGrabInteractorRight.SelectedInteractable.transform.gameObject;
             }
 
-            _isGrabbing = true;
+            _grabbedObject.transform.parent.SetParent(null);
             _wasGrabbingLastFrame = true;
             DebugLog.Instance.Log("Player pickup");
             _pet.OnBallPickedUpByPlayer();
@@ -45,14 +44,13 @@ public class Player : MonoBehaviour
                 _grabbedObject = _distanceHandGrabInteractorRight.SelectedInteractable.transform.gameObject;
             }
 
-            _isGrabbing = true;
+            _grabbedObject.transform.parent.SetParent(null);
             _wasGrabbingLastFrame = true;
             DebugLog.Instance.Log("Player pickup");
             _pet.OnBallPickedUpByPlayer();
         }
         else
         {
-            _isGrabbing = false;
             if (_wasGrabbingLastFrame)
             {
                 DebugLog.Instance.Log("Player threw object");
