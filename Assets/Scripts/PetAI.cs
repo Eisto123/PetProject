@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.AI;
 
@@ -21,9 +22,12 @@ public class PetAI : MonoBehaviour
 
     private Transform _target;
 
+    private Animator _animator;
+
     private void Awake()
     {
         _agent = GetComponent<NavMeshAgent>();
+        _animator = GetComponentInChildren<Animator>();
     }
 
     private void Update()
@@ -42,8 +46,12 @@ public class PetAI : MonoBehaviour
             case Behaviour.ReturnPickup:
                 ReturnPickup();
                 break;
+            case Behaviour.OnPatting:
+                Patting();
+                break;
         }
     }
+
 
     #region State Changes
 
@@ -73,6 +81,17 @@ public class PetAI : MonoBehaviour
         _agent.updateRotation = true;
         _currentBehaviour = Behaviour.Idle;
     }
+    public void OnPattingStart(){
+        _currentBehaviour = Behaviour.OnPatting;
+        _agent.updateRotation = true;
+        _animator.SetBool("OnPatting", true);
+
+    }
+    public void OnPattingEnd(){
+        _animator.SetBool("OnPatting", false);
+        _currentBehaviour = Behaviour.Idle;
+    }
+    
 
     #endregion
 
@@ -256,6 +275,12 @@ public class PetAI : MonoBehaviour
 
     #endregion
 
+    #region State - Patting
+    private void Patting()
+    {
+    }
+
+    #endregion
     #region DEBUG
 
     public void DBG_ChangeStateTo(int newBehaviour)
