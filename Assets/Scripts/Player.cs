@@ -19,6 +19,7 @@ public class Player : MonoBehaviour
     private bool _wasGrabbingLastFrame;
 
     private GameObject _grabbedObject;
+    
 
     private void Update()
     {
@@ -32,7 +33,7 @@ public class Player : MonoBehaviour
 
             _grabbedObject.transform.parent.SetParent(null);
             _wasGrabbingLastFrame = true;
-
+            DebugLog.Instance.Log("Player pickup");
             _pet.OnBallPickedUpByPlayer();
         }
         else if (_distanceHandGrabInteractorLeft.IsGrabbing || _distanceHandGrabInteractorRight.IsGrabbing)
@@ -45,13 +46,14 @@ public class Player : MonoBehaviour
 
             _grabbedObject.transform.parent.SetParent(null);
             _wasGrabbingLastFrame = true;
-
+            DebugLog.Instance.Log("Player pickup");
             _pet.OnBallPickedUpByPlayer();
         }
         else
         {
             if (_wasGrabbingLastFrame)
             {
+                DebugLog.Instance.Log("Player threw object");
                 Debug.Log("Player threw object");
                 _wasGrabbingLastFrame = false;
 
