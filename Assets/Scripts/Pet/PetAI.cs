@@ -1,4 +1,5 @@
 using System;
+using Oculus.Interaction.Input;
 using UnityEngine;
 using UnityEngine.AI;
 
@@ -12,18 +13,26 @@ public class PetAI : MonoBehaviour
     [SerializeField] private Transform _pickupPoint;
     [SerializeField] private LayerMask _pickupLayer;
 
-    private Pickup _pickedUpObject;
-    private Collider[] _scanResults = new Collider[3];
+    [Header("Visuals")]
+    [SerializeField] private Transform _rootRotater;
+    [Tooltip("Degrees per second")]
+    [SerializeField] private float _rotateSpeed = 50f;
+    [SerializeField] private float _lookAtVeritcalTargetRange = 5f;
+    [SerializeField] private float _lookAtHorizontalTargetRange = 5f;
 
     // Component References
     private NavMeshAgent _agent;
+    private Animator _animator;
 
-    // State
+    // State Behaviour
     private Behaviour _currentBehaviour = Behaviour.Idle;
 
-    private Transform _target;
+    private Collider[] _scanResults = new Collider[3];
+    private Pickup _pickedUpObject;
 
-    private Animator _animator;
+    private Transform _chaseTarget;
+    private Transform _lookAtVerticalTarget;
+    private Transform _lookAtHorizontalTarget; // THIS IS IGNORED IF NAVMESH IS HANDLING ROTATION
 
     private void Awake()
     {
@@ -48,17 +57,58 @@ public class PetAI : MonoBehaviour
                 ReturnPickup();
                 break;
             case Behaviour.OnPatting:
-                Patting();
+                // noop
                 break;
         }
+
+        LookAtVerticalTarget();
+        if (!_agent.updateRotation)
+            LookAtHorizontalTarget();
     }
 
+    /**
+    * Look at the target ignoring their x and z-position.
+    */
+    private void LookAtVerticalTarget()
+    {
+        Vector3 directionToTarget;
+        if (_lookAtVerticalTarget == null)
+        {
+            directionToTarget = Vector3.forward;
+        }
+        else
+        {
+            directionToTarget = _lookAtVerticalTarget.position - transform.position;
+        }
+
+        Quaternion lookRotation = Quaternion.LookRotation(directionToTarget);
+
+        Vector3 currentEulerAngles = _rootRotater.localRotation.eulerAngles;
+        // Only modify the x-axis rotation
+        currentEulerAngles.x = lookRotation.eulerAngles.x;
+
+        // Apply new rotation
+        Quaternion finalRotation = Quaternion.Euler(currentEulerAngles);
+        _rootRotater.localRotation = Quaternion.RotateTowards(_rootRotater.localRotation, finalRotation, _rotateSpeed * Time.deltaTime);
+    }
+
+    /**
+    * Look at the target ignoring their y-position.
+    */
+    private void LookAtHorizontalTarget()
+    {
+        Vector3 nextPos = (_chaseTarget.position - transform.position).normalized;
+        nextPos.y = 0f;
+        Quaternion targetRotation = Quaternion.LookRotation(nextPos);
+        targetRotation.eulerAngles = new Vector3(0, targetRotation.eulerAngles.y, 0);
+        transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRotation, _rotateSpeed * Time.deltaTime);
+    }
 
     #region State Changes
 
     public void OnBallPickedUpByPlayer()
     {
-        _agent.updateRotation = true;
+        _agent.updateRotation = false;
         DropPickup();
         _currentBehaviour = Behaviour.ReadyToPlay;
     }
@@ -67,33 +117,38 @@ public class PetAI : MonoBehaviour
     {
         _currentBehaviour = Behaviour.GoPickup;
         _agent.updateRotation = false;
-        _target = pickupTarget;
+        _lookAtVerticalTarget = null;
+        _chaseTarget = pickupTarget;
         State_GoPickup.RecalcToTargetTimer = State_GoPickup.RecalcToTargetTime;
     }
 
-    private void OnTargetPickedUp()
+    private void OnBallPickedUpByPet()
     {
-        _target = _playerRef;
+        _chaseTarget = _playerRef;
         _agent.updateRotation = true;
+        _lookAtVerticalTarget = _playerRef;
         _currentBehaviour = Behaviour.ReturnPickup;
     }
 
     private void OnPickupReturned()
     {
         _agent.updateRotation = true;
+        _lookAtVerticalTarget = null;
         _currentBehaviour = Behaviour.Idle;
     }
-    public void OnPattingStart(){
+
+    public void OnPattingStart()
+    {
         _currentBehaviour = Behaviour.OnPatting;
         _agent.updateRotation = true;
         _animator.SetBool("OnPatting", true);
-
     }
-    public void OnPattingEnd(){
+
+    public void OnPattingEnd()
+    {
         _animator.SetBool("OnPatting", false);
         _currentBehaviour = Behaviour.Idle;
     }
-    
 
     #endregion
 
@@ -172,19 +227,21 @@ public class PetAI : MonoBehaviour
 
     private void ReadyToPlay()
     {
-        _target = _playerRef;
+        _chaseTarget = _playerRef;
         _agent.stoppingDistance = _stoppingDistanceToPlayer;
-        if (Vector3.Distance(transform.position, _target.position) <= _agent.stoppingDistance)
+
+        float distanceToTarget = Vector3.Distance(transform.position, _chaseTarget.position);
+
+        _lookAtVerticalTarget = distanceToTarget <= _lookAtVeritcalTargetRange ? _chaseTarget : null;
+
+        if (distanceToTarget > _agent.stoppingDistance + 0.5f)
         {
-            // WAIT
-        }
-        else
-        {
+            // recalc path to target at set interval
             State_ReadyToPlay.RecalcPathTimer += Time.deltaTime;
             if (State_ReadyToPlay.RecalcPathTimer >= State_ReadyToPlay.RecalcPathTime)
             {
                 State_ReadyToPlay.RecalcPathTimer = 0.0f;
-                _agent.SetDestination(_target.position);
+                _agent.SetDestination(_chaseTarget.position);
             }
         }
     }
@@ -196,8 +253,7 @@ public class PetAI : MonoBehaviour
     private void GoPickup()
     {
         _agent.stoppingDistance = State_GoPickup.stoppingDistanceToPickup;
-        HandleRotation();
-        if (Vector3.Distance(transform.position, _target.position) <= _agent.stoppingDistance + State_GoPickup.minDistanceToScan)
+        if (Vector3.Distance(transform.position, _chaseTarget.position) <= _agent.stoppingDistance + State_GoPickup.minDistanceToScan)
         {
             ScanForPickup();
         }
@@ -207,7 +263,7 @@ public class PetAI : MonoBehaviour
             if (State_GoPickup.RecalcToTargetTimer >= State_GoPickup.RecalcToTargetTime)
             {
                 State_GoPickup.RecalcToTargetTimer = 0.0f;
-                _agent.SetDestination(_target.position);
+                _agent.SetDestination(_chaseTarget.position);
             }
         }
     }
@@ -268,16 +324,7 @@ public class PetAI : MonoBehaviour
         pickup.transform.SetParent(_pickupPoint);
         pickup.transform.position = _pickupPoint.position;
 
-        OnTargetPickedUp();
-    }
-
-    private void HandleRotation()
-    {
-        Vector3 nextPos = (_target.position - transform.position).normalized;
-        nextPos.y = 0f;
-        Quaternion targetRotation = Quaternion.LookRotation(nextPos);
-        targetRotation.eulerAngles = new Vector3(0, targetRotation.eulerAngles.y, 0);
-        transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRotation, _agent.angularSpeed * Time.deltaTime);
+        OnBallPickedUpByPet();
     }
 
     #endregion
@@ -287,7 +334,7 @@ public class PetAI : MonoBehaviour
     private void ReturnPickup()
     {
         _agent.stoppingDistance = _stoppingDistanceToPlayer;
-        Vector3 _targetPosFloor = new(_target.position.x, transform.position.y, _target.position.z);
+        Vector3 _targetPosFloor = new(_chaseTarget.position.x, transform.position.y, _chaseTarget.position.z);
         if (Vector3.Distance(transform.position, _targetPosFloor) <= _agent.stoppingDistance)
         {
             DropPickup();
@@ -299,7 +346,7 @@ public class PetAI : MonoBehaviour
             if (State_ReturnPickup.RecalcToPlayerTimer >= State_ReturnPickup.RecalcToPlayerTime)
             {
                 State_ReturnPickup.RecalcToPlayerTimer = 0.0f;
-                _agent.SetDestination(_target.position);
+                _agent.SetDestination(_chaseTarget.position);
             }
         }
     }
@@ -315,12 +362,6 @@ public class PetAI : MonoBehaviour
 
     #endregion
 
-    #region State - Patting
-    private void Patting()
-    {
-    }
-
-    #endregion
     #region DEBUG
 
     public void DBG_ChangeStateTo(int newBehaviour)
@@ -333,6 +374,7 @@ public class PetAI : MonoBehaviour
     [Header("DEBUG")]
     [SerializeField] private bool _showIdleRadius = false;
     [SerializeField] private bool _showPickupRange = false;
+    [SerializeField] private bool _showLookAtVerticalRange = false;
 
     private void OnDrawGizmosSelected()
     {
@@ -348,6 +390,12 @@ public class PetAI : MonoBehaviour
             Gizmos.color = transparentRed;
             Gizmos.DrawSphere(transform.position + transform.forward * State_GoPickup.PickupRange, State_GoPickup.PickupRadius);
             Gizmos.DrawSphere(transform.position, State_GoPickup.PickupRadius);
+        }
+
+        if (_showLookAtVerticalRange)
+        {
+            Gizmos.color = Color.green;
+            Gizmos.DrawWireSphere(transform.position, _lookAtVeritcalTargetRange);
         }
     }
 
