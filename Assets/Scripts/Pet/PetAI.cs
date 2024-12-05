@@ -1,5 +1,4 @@
 using System;
-using Oculus.Interaction.Input;
 using UnityEngine;
 using UnityEngine.AI;
 
@@ -111,14 +110,18 @@ public class PetAI : MonoBehaviour
         _agent.updateRotation = false;
         DropPickup();
         _currentBehaviour = Behaviour.ReadyToPlay;
+        _animator.SetBool("OnLookAt", true);
+        _animator.SetFloat("LookAtRandom",UnityEngine.Random.Range(0,1));
     }
 
     public void OnBallThrown(Transform pickupTarget)
     {
+        _animator.SetBool("OnLookAt", false);
         _currentBehaviour = Behaviour.GoPickup;
         _agent.updateRotation = false;
         _lookAtVerticalTarget = null;
         _chaseTarget = pickupTarget;
+        _animator.SetBool("OnChasing", true);
         State_GoPickup.RecalcToTargetTimer = State_GoPickup.RecalcToTargetTime;
     }
 
@@ -134,6 +137,7 @@ public class PetAI : MonoBehaviour
     {
         _agent.updateRotation = true;
         _lookAtVerticalTarget = null;
+        _animator.SetBool("OnChasing", false);
         _currentBehaviour = Behaviour.Idle;
     }
 
