@@ -1686,7 +1686,7 @@ MonoBehaviour:
     m_Bits: 16
   _rootRotater: {fileID: 1392442616080258603}
   _rotateSpeed: 200
-  _lookAtVeritcalTargetRange: 5
+  _lookAtVeritcalTargetRange: 2
   _lookAtHorizontalTargetRange: 5
   _showIdleRadius: 0
   _showPickupRange: 0

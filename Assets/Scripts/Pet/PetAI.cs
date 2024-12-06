@@ -16,7 +16,7 @@ public class PetAI : MonoBehaviour
     [SerializeField] private Transform _rootRotater;
     [Tooltip("Degrees per second")]
     [SerializeField] private float _rotateSpeed = 50f;
-    [SerializeField] private float _lookAtVeritcalTargetRange = 5f;
+    [SerializeField] private float _lookAtVerticalTargetRange = 5f;
     [SerializeField] private float _lookAtHorizontalTargetRange = 5f;
 
     // Component References
@@ -31,7 +31,7 @@ public class PetAI : MonoBehaviour
 
     private Transform _chaseTarget;
     private Transform _lookAtVerticalTarget;
-    private Transform _lookAtHorizontalTarget; // THIS IS IGNORED IF NAVMESH IS HANDLING ROTATION
+    // private Transform _lookAtHorizontalTarget; // THIS IS IGNORED IF NAVMESH IS HANDLING ROTATION
 
     private void Awake()
     {
@@ -77,7 +77,8 @@ public class PetAI : MonoBehaviour
         }
         else
         {
-            directionToTarget = _lookAtVerticalTarget.position - transform.position;
+            Vector3 lookAtTarget = new(_lookAtVerticalTarget.position.x, _lookAtVerticalTarget.position.y - 0.2f, _lookAtVerticalTarget.position.z);
+            directionToTarget = lookAtTarget - transform.position;
         }
 
         Quaternion lookRotation = Quaternion.LookRotation(directionToTarget);
@@ -99,7 +100,7 @@ public class PetAI : MonoBehaviour
         Vector3 nextPos = (_chaseTarget.position - transform.position).normalized;
         nextPos.y = 0f;
         Quaternion targetRotation = Quaternion.LookRotation(nextPos);
-        targetRotation.eulerAngles = new Vector3(0, targetRotation.eulerAngles.y, 0);
+        targetRotation.eulerAngles = new Vector3(0f, targetRotation.eulerAngles.y, 0f);
         transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRotation, _rotateSpeed * Time.deltaTime);
     }
 
@@ -107,21 +108,24 @@ public class PetAI : MonoBehaviour
 
     public void OnBallPickedUpByPlayer()
     {
+        if (_currentBehaviour == Behaviour.ReadyToPlay) return;
+
         _agent.updateRotation = false;
         DropPickup();
         _currentBehaviour = Behaviour.ReadyToPlay;
-        _animator.SetBool("OnLookAt", true);
-        _animator.SetFloat("LookAtRandom",UnityEngine.Random.Range(0,1));
     }
 
     public void OnBallThrown(Transform pickupTarget)
     {
-        _animator.SetBool("OnLookAt", false);
+        State_ReadyToPlay.PetImpatientTimer = 0.0f;
+        State_ReadyToPlay.IsImpatient = false;
+
+        _animator.SetBool("OnJump", false);
+        _animator.ResetTrigger("OnRoar");
         _currentBehaviour = Behaviour.GoPickup;
         _agent.updateRotation = false;
         _lookAtVerticalTarget = null;
         _chaseTarget = pickupTarget;
-        _animator.SetBool("OnChasing", true);
         State_GoPickup.RecalcToTargetTimer = State_GoPickup.RecalcToTargetTime;
     }
 
@@ -137,7 +141,6 @@ public class PetAI : MonoBehaviour
     {
         _agent.updateRotation = true;
         _lookAtVerticalTarget = null;
-        _animator.SetBool("OnChasing", false);
         _currentBehaviour = Behaviour.Idle;
     }
 
@@ -191,9 +194,7 @@ public class PetAI : MonoBehaviour
                 if (randomPoint == Vector3.zero) Debug.LogError("Moved to a zero point");
                 _agent.SetDestination(randomPoint);
             }
-
         }
-
     }
 
     private void HandleRandomPositionCollecting()
@@ -234,12 +235,19 @@ public class PetAI : MonoBehaviour
         _chaseTarget = _playerRef;
         _agent.stoppingDistance = _stoppingDistanceToPlayer;
 
+        UpdateImpatience();
+
         float distanceToTarget = Vector3.Distance(transform.position, _chaseTarget.position);
+        _lookAtVerticalTarget = (distanceToTarget <= _lookAtVerticalTargetRange) && !_animator.GetBool("OnJump") ? _chaseTarget : null;
 
-        _lookAtVerticalTarget = distanceToTarget <= _lookAtVeritcalTargetRange ? _chaseTarget : null;
+        float distanceToMove = State_ReadyToPlay.IsAtPlayer ? 1f : 0.5f;
+        bool isFarEnoughToMove = distanceToTarget > _agent.stoppingDistance + distanceToMove;
 
-        if (distanceToTarget > _agent.stoppingDistance + 0.5f)
+        if (isFarEnoughToMove)
         {
+            State_ReadyToPlay.IsAtPlayer = false;
+            _animator.SetBool("OnChasing", true);
+
             // recalc path to target at set interval
             State_ReadyToPlay.RecalcPathTimer += Time.deltaTime;
             if (State_ReadyToPlay.RecalcPathTimer >= State_ReadyToPlay.RecalcPathTime)
@@ -247,6 +255,48 @@ public class PetAI : MonoBehaviour
                 State_ReadyToPlay.RecalcPathTimer = 0.0f;
                 _agent.SetDestination(_chaseTarget.position);
             }
+        }
+        else
+        {
+            State_ReadyToPlay.IsAtPlayer = true;
+            _animator.SetBool("OnChasing", false);
+        }
+    }
+
+    private void UpdateImpatience()
+    {
+        float timeToUse = State_ReadyToPlay.IsImpatient ? State_ReadyToPlay.PetImpatientCooldownTime : State_ReadyToPlay.PetImpatientMinTime;
+
+        State_ReadyToPlay.PetImpatientTimer += Time.deltaTime;
+        if (State_ReadyToPlay.PetImpatientTimer >= timeToUse)
+        {
+            State_ReadyToPlay.PetImpatientTimer = 0.0f;
+            State_ReadyToPlay.IsImpatient = !State_ReadyToPlay.IsImpatient;
+            ChooseImpatientAction();
+        }
+    }
+
+    private void ChooseImpatientAction()
+    {
+        string OnJump = "OnJump";
+
+        if (!State_ReadyToPlay.IsImpatient)
+        {
+            _animator.SetBool(OnJump, false);
+            _animator.ResetTrigger("OnRoar");
+            return;
+        }
+
+        // 1 in 3 chance to jump
+        if (UnityEngine.Random.Range(0, 3) == 0)
+        {
+            _animator.SetBool(OnJump, true);
+            _lookAtVerticalTarget = null;
+        }
+        else
+        {
+            _animator.SetTrigger("OnRoar");
+            State_ReadyToPlay.IsImpatient = false;
         }
     }
 
@@ -399,7 +449,7 @@ public class PetAI : MonoBehaviour
         if (_showLookAtVerticalRange)
         {
             Gizmos.color = Color.green;
-            Gizmos.DrawWireSphere(transform.position, _lookAtVeritcalTargetRange);
+            Gizmos.DrawWireSphere(transform.position, _lookAtVerticalTargetRange);
         }
     }
 
