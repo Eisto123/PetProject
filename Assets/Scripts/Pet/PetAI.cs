@@ -109,11 +109,21 @@ public class PetAI : MonoBehaviour
         transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRotation, _rotateSpeed * Time.deltaTime);
     }
 
+    /**
+    * Get distance to target ignoring the target's y-position.
+    */
+    private float GetHorizontalDistanceToTarget(Vector3 targetPosition)
+    {
+        Vector3 targetPos = new(targetPosition.x, transform.position.y, targetPosition.z);
+        return Vector3.Distance(transform.position, targetPos);
+
+    }
+
     #region State Changes
 
     public void OnBallPickedUpByPlayer()
     {
-        if (_currentBehaviour == Behaviour.ReadyToPlay) return;
+        if (_currentBehaviour == Behaviour.ReadyToPlay || _currentBehaviour == Behaviour.Eating) return;
 
         _agent.updateRotation = false;
         DropPickup();
@@ -171,6 +181,7 @@ public class PetAI : MonoBehaviour
     {
         _chaseTarget = null;
         _agent.updateRotation = true;
+        _animator.SetBool("OnChasing", false);
         _currentBehaviour = Behaviour.Idle;
     }
 
@@ -254,11 +265,10 @@ public class PetAI : MonoBehaviour
 
         UpdateImpatience();
 
-        float distanceToTarget = Vector3.Distance(transform.position, _chaseTarget.position);
-        _lookAtVerticalTarget = (distanceToTarget <= _lookAtVerticalTargetRange) && !_animator.GetBool("OnJump") ? _chaseTarget : null;
-
+        float distanceToTarget = GetHorizontalDistanceToTarget(_chaseTarget.position);
         float distanceToMove = State_ReadyToPlay.IsAtPlayer ? 1f : 0.5f;
         bool isFarEnoughToMove = distanceToTarget > _agent.stoppingDistance + distanceToMove;
+        _lookAtVerticalTarget = (distanceToTarget <= _lookAtVerticalTargetRange) && !_animator.GetBool("OnJump") ? _chaseTarget : null;
 
         if (isFarEnoughToMove)
         {
@@ -403,10 +413,6 @@ public class PetAI : MonoBehaviour
         pickup.transform.position = _pickupPoint.position;
         OnBallPickedUpByPet();
     }
-
-    // private void Eat(Pickup pickup){
-    //     StartCoroutine(EatProcess(pickup));
-    // }
     IEnumerator EatProcess(Pickup pickup)
     {
         _currentBehaviour = Behaviour.Eating;
@@ -423,8 +429,7 @@ public class PetAI : MonoBehaviour
     private void ReturnPickup()
     {
         _agent.stoppingDistance = _stoppingDistanceToPlayer;
-        Vector3 _targetPosFloor = new(_chaseTarget.position.x, transform.position.y, _chaseTarget.position.z);
-        if (Vector3.Distance(transform.position, _targetPosFloor) <= _agent.stoppingDistance)
+        if (GetHorizontalDistanceToTarget(_chaseTarget.position) <= _agent.stoppingDistance)
         {
             DropPickup();
             OnPickupReturned();
