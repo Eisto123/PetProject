@@ -1,6 +1,9 @@
 using System;
+using System.Collections;
+using Unity.Burst.Intrinsics;
 using UnityEngine;
 using UnityEngine.AI;
+using UnityEngine.Events;
 
 public class PetAI : MonoBehaviour
 {
@@ -19,6 +22,8 @@ public class PetAI : MonoBehaviour
     [SerializeField] private float _lookAtVeritcalTargetRange = 5f;
     [SerializeField] private float _lookAtHorizontalTargetRange = 5f;
 
+    [Header("Events")]
+    [SerializeField] private UnityEvent<string> OnAudioPlay;
     // Component References
     private NavMeshAgent _agent;
     private Animator _animator;
@@ -151,6 +156,10 @@ public class PetAI : MonoBehaviour
     public void OnPattingEnd()
     {
         _animator.SetBool("OnPatting", false);
+        _currentBehaviour = Behaviour.Idle;
+    }
+    private void OnFoodEatByPet(){
+        
         _currentBehaviour = Behaviour.Idle;
     }
 
@@ -316,8 +325,15 @@ public class PetAI : MonoBehaviour
         State_GoPickup.WaitBeforePickupTimer += Time.deltaTime;
         if (State_GoPickup.WaitBeforePickupTimer >= State_GoPickup.WaitBeforePickupTime)
         {
-            Pickup(pickup);
-            State_GoPickup.WaitBeforePickupTimer = 0f;
+            if(pickup.gameObject.tag == "Meat"){
+                StartCoroutine(EatProcess(pickup));
+                State_GoPickup.WaitBeforePickupTimer = 0f;
+            }
+            else{
+                Pickup(pickup);
+                State_GoPickup.WaitBeforePickupTimer = 0f;
+            }
+            
         }
     }
 
@@ -327,8 +343,17 @@ public class PetAI : MonoBehaviour
         pickup.OnPickedup();
         pickup.transform.SetParent(_pickupPoint);
         pickup.transform.position = _pickupPoint.position;
-
         OnBallPickedUpByPet();
+    }
+
+    // private void Eat(Pickup pickup){
+    //     StartCoroutine(EatProcess(pickup));
+    // }
+    IEnumerator EatProcess(Pickup pickup){
+        _animator.SetTrigger("OnEating");
+        yield return new WaitForSeconds(1f);
+        Destroy(pickup.gameObject);
+        OnFoodEatByPet();
     }
 
     #endregion
