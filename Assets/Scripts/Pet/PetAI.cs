@@ -131,6 +131,7 @@ public class PetAI : MonoBehaviour
         _agent.updateRotation = false;
         _lookAtVerticalTarget = null;
         _chaseTarget = pickupTarget;
+        _animator.SetBool("OnChasing", true);
         State_GoPickup.RecalcToTargetTimer = State_GoPickup.RecalcToTargetTime;
     }
 
@@ -146,7 +147,7 @@ public class PetAI : MonoBehaviour
     {
         _agent.updateRotation = true;
         _lookAtVerticalTarget = null;
-        _currentBehaviour = Behaviour.Idle;
+        ReturnToIdle();
     }
 
     public void OnPattingStart()
@@ -159,10 +160,17 @@ public class PetAI : MonoBehaviour
     public void OnPattingEnd()
     {
         _animator.SetBool("OnPatting", false);
-        _currentBehaviour = Behaviour.Idle;
+        ReturnToIdle();
     }
-    private void OnFoodEatByPet(){
-        
+    private void OnFoodEatByPet()
+    {
+        ReturnToIdle();
+    }
+
+    private void ReturnToIdle()
+    {
+        _chaseTarget = null;
+        _agent.updateRotation = true;
         _currentBehaviour = Behaviour.Idle;
     }
 
@@ -375,15 +383,15 @@ public class PetAI : MonoBehaviour
         State_GoPickup.WaitBeforePickupTimer += Time.deltaTime;
         if (State_GoPickup.WaitBeforePickupTimer >= State_GoPickup.WaitBeforePickupTime)
         {
-            if(pickup.gameObject.tag == "Meat"){
+            if (pickup.gameObject.tag == "Meat")
+            {
                 StartCoroutine(EatProcess(pickup));
-                State_GoPickup.WaitBeforePickupTimer = 0f;
             }
-            else{
+            else
+            {
                 Pickup(pickup);
-                State_GoPickup.WaitBeforePickupTimer = 0f;
             }
-            
+            State_GoPickup.WaitBeforePickupTimer = 0f;
         }
     }
 
@@ -399,7 +407,9 @@ public class PetAI : MonoBehaviour
     // private void Eat(Pickup pickup){
     //     StartCoroutine(EatProcess(pickup));
     // }
-    IEnumerator EatProcess(Pickup pickup){
+    IEnumerator EatProcess(Pickup pickup)
+    {
+        _currentBehaviour = Behaviour.Eating;
         _animator.SetTrigger("OnEating");
         yield return new WaitForSeconds(1f);
         Destroy(pickup.gameObject);

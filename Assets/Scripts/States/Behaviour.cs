@@ -4,5 +4,6 @@ public enum Behaviour
     ReadyToPlay,
     GoPickup,
     ReturnPickup,
-    OnPatting
+    OnPatting,
+    Eating
 }
