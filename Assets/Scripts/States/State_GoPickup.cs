@@ -8,6 +8,7 @@ public static class State_GoPickup
 
     public static float PickupRadius = 0.25f;
     public static float PickupRange = 0.5f;
+    public static bool IsPickingUp = false;
 
     public static float WaitBeforePickupTime = 0.5f;
     public static float WaitBeforePickupTimer = 0f;

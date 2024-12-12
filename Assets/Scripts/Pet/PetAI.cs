@@ -137,6 +137,7 @@ public class PetAI : MonoBehaviour
 
         _animator.SetBool("OnJump", false);
         _animator.ResetTrigger("OnRoar");
+        State_GoPickup.IsPickingUp = false;
         _currentBehaviour = Behaviour.GoPickup;
         _agent.updateRotation = false;
         _lookAtVerticalTarget = null;
@@ -147,6 +148,7 @@ public class PetAI : MonoBehaviour
 
     private void OnBallPickedUpByPet()
     {
+        State_GoPickup.IsPickingUp = false;
         _chaseTarget = _playerRef;
         _agent.updateRotation = true;
         _lookAtVerticalTarget = _playerRef;
@@ -351,6 +353,8 @@ public class PetAI : MonoBehaviour
 
     private void ScanForPickup()
     {
+        if (State_GoPickup.IsPickingUp) return;
+
         Array.Clear(_scanResults, 0, _scanResults.Length);
         if (Physics.OverlapSphereNonAlloc(transform.position, State_GoPickup.PickupRadius, _scanResults, _pickupLayer) > 0)
         {
@@ -399,7 +403,7 @@ public class PetAI : MonoBehaviour
             }
             else
             {
-                Pickup(pickup);
+                StartCoroutine(PickupProcess(pickup));
             }
             State_GoPickup.WaitBeforePickupTimer = 0f;
         }
@@ -413,6 +417,16 @@ public class PetAI : MonoBehaviour
         pickup.transform.position = _pickupPoint.position;
         OnBallPickedUpByPet();
     }
+
+    IEnumerator PickupProcess(Pickup pickup)
+    {
+        State_GoPickup.IsPickingUp = true;
+        // _currentBehaviour = Behaviour.PickingUp;
+        _animator.SetTrigger("OnPickup");
+        yield return new WaitForSeconds(1f);
+        Pickup(pickup);
+    }
+
     IEnumerator EatProcess(Pickup pickup)
     {
         _currentBehaviour = Behaviour.Eating;

@@ -5,5 +5,6 @@ public enum Behaviour
     GoPickup,
     ReturnPickup,
     OnPatting,
-    Eating
+    Eating,
+    // PickingUp
 }
