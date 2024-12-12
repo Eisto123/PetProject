@@ -20,16 +20,16 @@ public class PetAI : MonoBehaviour
     [Tooltip("Degrees per second")]
     [SerializeField] private float _rotateSpeed = 50f;
     [SerializeField] private float _lookAtVerticalTargetRange = 5f;
-    [SerializeField] private float _lookAtHorizontalTargetRange = 5f;
+    // [SerializeField] private float _lookAtHorizontalTargetRange = 5f;
 
     [Header("Events")]
     [SerializeField] private UnityEvent<string> OnAudioPlay;
     // Component References
     private NavMeshAgent _agent;
-    private Animator _animator;
+    public Animator _animator;
 
     // State Behaviour
-    private Behaviour _currentBehaviour = Behaviour.Idle;
+    public Behaviour _currentBehaviour = Behaviour.Idle;
 
     private Collider[] _scanResults = new Collider[3];
     private Pickup _pickedUpObject;
@@ -268,7 +268,7 @@ public class PetAI : MonoBehaviour
         UpdateImpatience();
 
         float distanceToTarget = GetHorizontalDistanceToTarget(_chaseTarget.position);
-        float distanceToMove = State_ReadyToPlay.IsAtPlayer ? 1f : 0.5f;
+        float distanceToMove = State_ReadyToPlay.IsAtPlayer ? 0.6f : 0.5f;
         bool isFarEnoughToMove = distanceToTarget > _agent.stoppingDistance + distanceToMove;
         _lookAtVerticalTarget = (distanceToTarget <= _lookAtVerticalTargetRange) && !_animator.GetBool("OnJump") ? _chaseTarget : null;
 

@@ -11,7 +11,11 @@ public class Patting : MonoBehaviour
             var pet = other.GetComponent<PetAI>();
             if (pet != null)
             {
-                pet.OnPattingStart();
+                if(pet._currentBehaviour != Behaviour.ReturnPickup&&pet._currentBehaviour!= Behaviour.GoPickup
+                && !pet._animator.GetCurrentAnimatorStateInfo(0).IsName("Anim_Dra_Jump")&&!pet._animator.GetCurrentAnimatorStateInfo(0).IsName("Anim_Dra_Roar")
+                ){
+                    pet.OnPattingStart();
+                }
                 // DebugLog.Instance.Log("patting Start");
             }
             else
